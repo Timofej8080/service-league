@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Сервисная Лига</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -16,7 +16,6 @@
       align-items: center;
       height: 100vh;
     }
-
     .card {
       background: #1e293b;
       padding: 40px;
@@ -25,17 +24,16 @@
       text-align: center;
       width: 400px;
     }
-
     h1 {
       margin-bottom: 10px;
       font-size: 24px;
     }
-
     .username {
       margin-bottom: 30px;
       color: #94a3b8;
+      font-weight: 600;
+      font-size: 18px;
     }
-
     button {
       background: #3b82f6;
       border: none;
@@ -46,7 +44,6 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-
     button:hover {
       background: #2563eb;
     }
@@ -56,34 +53,81 @@
 
   <div class="card">
     <h1>Сервисная Лига</h1>
-    <div class="username" id="nickname"></div>
+    <div class="username" id="nickname">Загрузка...</div>
     <p>Добро пожаловать в тренировочную поддержку!</p>
     <p>Ваша задача — корректно и профессионально отвечать на обращения клиентов.</p>
     <button onclick="startShift()">Начать смену</button>
   </div>
 
   <script>
-    const names = ['Unicors', 'Starlight', 'Nebula', 'Galaxy', 'Nova', 'Quantum', 'Orbit', 'Comet', 'Echo', 'Nimbus'];
-
-    function generateNickname() {
-      const name = names[Math.floor(Math.random() * names.length)];
-      const id = Math.floor(Math.random() * 600) + 1;
-      return `${name}#${id}`;
+    // Проверяем, что VK API доступен
+    if (!window.VK) {
+      document.getElementById('nickname').textContent = 'Ошибка: VK API не загружен';
     }
 
-    function getNickname() {
-      let nickname = localStorage.getItem('supportNickname');
-      if (!nickname) {
-        nickname = generateNickname();
-        localStorage.setItem('supportNickname', nickname);
+    // Инициализация VK API (если нужно, в мини-приложении обычно уже инициализирован)
+    VK.init(() => {
+      initUser().then(nickname => {
+        document.getElementById('nickname').textContent = nickname;
+      });
+    }, error => {
+      document.getElementById('nickname').textContent = 'Ошибка инициализации VK API';
+      console.error('VK init failed', error);
+    });
+
+    // Генерация рандомного ника из слогов (без готового списка, с рандомом)
+    function generateName() {
+      const syllables = ["uni", "gor", "mor", "lex", "nor", "zir", "vel", "rex", "tron", "ex", "ka", "tor", "nim", "lan"];
+      let name = "";
+      for (let i = 0; i < 3; i++) {
+        name += syllables[Math.floor(Math.random() * syllables.length)];
       }
-      return nickname;
+      return name.charAt(0).toUpperCase() + name.slice(1);
     }
 
-    document.getElementById('nickname').textContent = getNickname();
+    function generateNumber() {
+      return Math.floor(Math.random() * 600) + 1;
+    }
+
+    // Получение данных пользователя из VK Storage
+    function getUserData() {
+      return new Promise(resolve => {
+        VK.Storage.get('userData', (data) => {
+          if (data && data.value) {
+            try {
+              resolve(JSON.parse(data.value));
+            } catch {
+              resolve(null);
+            }
+          } else {
+            resolve(null);
+          }
+        });
+      });
+    }
+
+    // Сохранение данных пользователя в VK Storage
+    function setUserData(userData) {
+      return new Promise(resolve => {
+        VK.Storage.set({key: 'userData', value: JSON.stringify(userData)}, () => {
+          resolve();
+        });
+      });
+    }
+
+    // Инициализация пользователя: получение или создание ника
+    async function initUser() {
+      let userData = await getUserData();
+      if (!userData) {
+        userData = {
+          nickname: `${generateName()}#${generateNumber()}`
+        };
+        await setUserData(userData);
+      }
+      return userData.nickname;
+    }
 
     function startShift() {
-      // Здесь будет переход к следующему экрану (обращения и ответы)
       alert('Смена началась! (пока заглушка)');
     }
   </script>
