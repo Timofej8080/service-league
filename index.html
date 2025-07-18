@@ -2,11 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Сервисная Лига — VK Bridge</title>
+  <title>Сервисная Лига — VK Bridge + Supabase</title>
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
   <style>
+    /* Твой CSS без изменений */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #1a202c, #0f172a);
@@ -19,7 +20,6 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-
     .card {
       background: #1e293b;
       padding: 36px 40px 40px 40px;
@@ -32,24 +32,15 @@
       flex-direction: column;
       overflow: hidden;
     }
-
     h1, h2, h3 {
       margin: 0 0 20px 0;
       font-weight: 600;
       color: #cbd5e1;
       text-shadow: 0 1px 3px rgba(0,0,0,0.4);
     }
-
-    h1 {
-      font-size: 28px;
-    }
-    h2 {
-      font-size: 22px;
-    }
-    h3 {
-      font-size: 18px;
-    }
-
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 18px; }
     .username {
       margin-bottom: 35px;
       color: #94a3b8;
@@ -59,14 +50,12 @@
       user-select: none;
       word-break: break-word;
     }
-
     p {
       margin: 0 0 18px 0;
       line-height: 1.5;
       color: #a0aec0;
       font-size: 15px;
     }
-
     button {
       background: #3b82f6;
       border: none;
@@ -94,7 +83,6 @@
       box-shadow: 0 3px 8px rgba(30, 64, 175, 0.9);
       transform: translateY(1px);
     }
-
     #tickets-list {
       overflow-y: auto;
       max-height: 230px;
@@ -118,7 +106,6 @@
       border-radius: 12px;
       border: 2px solid #1e293b;
     }
-
     #tickets-list button {
       background: #2563eb;
       width: 100%;
@@ -143,14 +130,12 @@
       box-shadow: 0 2px 8px rgba(34, 197, 94, 0.7);
       cursor: default;
     }
-
     #ticket-details {
       text-align: left;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
     }
-
     #client-message {
       background:#475569;
       padding: 16px;
@@ -162,7 +147,6 @@
       white-space: pre-wrap;
       box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
     }
-
     textarea {
       resize: none;
       font-family: 'Inter', sans-serif;
@@ -183,7 +167,6 @@
       box-shadow: 0 0 20px #3b82f6;
       background: #293544;
     }
-
     #send-answer {
       background: #10b981;
       box-shadow: 0 5px 15px rgba(16, 185, 129, 0.7);
@@ -197,7 +180,6 @@
       box-shadow: 0 3px 10px rgba(4, 120, 87, 0.9);
       transform: translateY(1px);
     }
-
     #end-shift {
       background: #ef4444;
       margin-top: auto;
@@ -244,12 +226,16 @@
   </div>
 
   <script>
-    // Инициализация VK Bridge
+    // VK Bridge init
     vkBridge.send('VKWebAppInit');
 
-    // Создаем стабильный никнейм на основе user_id
+    // Supabase init - вставь свои данные
+    const SUPABASE_URL = 'https://duwhvbffcrtqpohihdoo.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1d2h2YmZmY3J0cXBvaGloZG9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NjQ3NzMsImV4cCI6MjA2ODQ0MDc3M30.8Rwgy3hH8D45QmHPdxxP-GhEo6smgxtlWrMwIQHzsuo';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Никнейм по user_id ВК
     function createNicknameFromUserId(userId) {
-      // Пример: взять userId, перевести в строку и добавить суффикс из букв
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let suffix = '';
       let num = Number(userId);
@@ -269,91 +255,156 @@
       } catch (e) {
         console.error('Ошибка при получении информации о пользователе:', e);
       }
-      // Если получить userId не удалось — сгенерировать временный ник
       return 'Guest' + Math.floor(Math.random() * 10000);
     }
 
-    // Работа с тикетами
-    const tickets = [
-      { id: 1, message: "Не могу войти в аккаунт, помогите пожалуйста.", answered: false, answer: "" },
-      { id: 2, message: "Почему мой заказ задерживается?", answered: false, answer: "" },
-      { id: 3, message: "Как изменить адрес доставки?", answered: true, answer: "Здравствуйте, изменить адрес доставки можно в личном кабинете." },
-      { id: 4, message: "Приложение вылетает при запуске.", answered: false, answer: "" },
-      { id: 5, message: "Где найти настройки уведомлений?", answered: true, answer: "В настройках профиля выберите раздел 'Уведомления'." }
-    ];
-
+    // Тикеты из Supabase
+    let tickets = [];
     let currentTicketId = null;
+
+    async function fetchTickets() {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        alert('Ошибка загрузки тикетов: ' + error.message);
+        console.error(error);
+        return;
+      }
+      tickets = data;
+    }
 
     function renderTickets() {
       const container = document.getElementById('tickets-list');
       container.innerHTML = '';
       tickets.forEach(ticket => {
         const btn = document.createElement('button');
-        btn.textContent = (ticket.answered ? "✔️ " : "❗ ") + ticket.message;
-        btn.className = ticket.answered ? 'answered' : '';
+        btn.textContent = ticket.answered
+          ? `✅ ${ticket.message}`
+          : ticket.message;
         btn.disabled = ticket.answered;
-        btn.onclick = () => {
-          if (!ticket.answered) {
-            currentTicketId = ticket.id;
-            showTicketDetails(ticket);
-          }
-        };
+        btn.className = ticket.answered ? 'answered' : '';
+        btn.setAttribute('aria-pressed', ticket.id === currentTicketId ? 'true' : 'false');
+        btn.onclick = () => selectTicket(ticket.id);
         container.appendChild(btn);
       });
     }
 
-    function showTicketDetails(ticket) {
+    function selectTicket(id) {
+      currentTicketId = id;
+      const ticket = tickets.find(t => t.id === id);
+      if (!ticket) return;
+
       document.getElementById('client-message').textContent = ticket.message;
       document.getElementById('answer-text').value = ticket.answer || '';
-      document.getElementById('answer-text').focus();
+      updateSendButton();
+      highlightSelectedTicket();
     }
 
-    function sendAnswer() {
-      const answerInput = document.getElementById('answer-text');
-      if (!currentTicketId) {
-        alert('Выберите обращение для ответа.');
+    function highlightSelectedTicket() {
+      const buttons = document.querySelectorAll('#tickets-list button');
+      buttons.forEach(btn => {
+        btn.setAttribute('aria-pressed', 'false');
+        if (tickets.find(t => t.id === currentTicketId && t.message === btn.textContent.replace(/^✅ /, ''))) {
+          btn.setAttribute('aria-pressed', 'true');
+        }
+      });
+    }
+
+    function updateSendButton() {
+      const answerText = document.getElementById('answer-text').value.trim();
+      const sendBtn = document.getElementById('send-answer');
+      sendBtn.disabled = !answerText || currentTicketId === null || tickets.find(t => t.id === currentTicketId)?.answered;
+    }
+
+    // Отправка ответа — обновляем в Supabase
+    async function sendAnswer() {
+      const answer = document.getElementById('answer-text').value.trim();
+      if (!answer || currentTicketId === null) return;
+
+      // Обновляем в Supabase
+      const { error } = await supabase
+        .from('tickets')
+        .update({ answer, answered: true })
+        .eq('id', currentTicketId);
+
+      if (error) {
+        alert('Ошибка при отправке ответа: ' + error.message);
+        console.error(error);
         return;
       }
-      const answerText = answerInput.value.trim();
-      if (!answerText) {
-        alert('Ответ не может быть пустым.');
-        return;
+
+      // Обновляем локально
+      const idx = tickets.findIndex(t => t.id === currentTicketId);
+      if (idx !== -1) {
+        tickets[idx].answer = answer;
+        tickets[idx].answered = true;
       }
-      const ticket = tickets.find(t => t.id === currentTicketId);
-      ticket.answer = answerText;
-      ticket.answered = true;
-      currentTicketId = null;
-      answerInput.value = '';
+
       renderTickets();
-      clearTicketDetails();
+      selectNextTicket(currentTicketId);
     }
 
-    function clearTicketDetails() {
+    function selectNextTicket(currentId) {
+      const idx = tickets.findIndex(t => t.id === currentId);
+      for (let i = idx + 1; i < tickets.length; i++) {
+        if (!tickets[i].answered) {
+          selectTicket(tickets[i].id);
+          return;
+        }
+      }
+      // Если дальше нет открытых тикетов — сброс выбора
+      currentTicketId = null;
       document.getElementById('client-message').textContent = '';
       document.getElementById('answer-text').value = '';
+      updateSendButton();
     }
 
-    // Кнопка начать смену
-    document.getElementById('start-shift-btn').onclick = () => {
+    // Инициализация приложения
+    async function startShift() {
       document.getElementById('welcome-screen').style.display = 'none';
       document.getElementById('work-screen').style.display = 'flex';
+
+      await fetchTickets();
       renderTickets();
-    };
 
-    // Кнопка отправить ответ
-    document.getElementById('send-answer').onclick = sendAnswer;
-
-    // Кнопка завершить смену
-    document.getElementById('end-shift').onclick = () => {
-      if (confirm('Завершить смену? Все несохранённые ответы будут потеряны.')) {
-        location.reload();
+      // Автовыбор первого неотвеченного тикета
+      const firstOpen = tickets.find(t => !t.answered);
+      if (firstOpen) selectTicket(firstOpen.id);
+      else {
+        // Если тикетов нет или все отвечены
+        currentTicketId = null;
+        document.getElementById('client-message').textContent = 'Нет открытых обращений.';
+        document.getElementById('answer-text').value = '';
+        updateSendButton();
       }
-    };
+    }
 
-    // Загружаем и отображаем никнейм
-    loadUserNickname().then(nick => {
-      document.getElementById('nickname').textContent = nick;
-    });
+    // Завершение смены — просто возвращаемся на стартовый экран
+    function endShift() {
+      currentTicketId = null;
+      tickets = [];
+      document.getElementById('work-screen').style.display = 'none';
+      document.getElementById('welcome-screen').style.display = 'flex';
+      document.getElementById('nickname').textContent = nickname;
+    }
+
+    // Переменные
+    let nickname = '...';
+
+    // Слушатели
+    document.getElementById('start-shift-btn').onclick = startShift;
+    document.getElementById('send-answer').onclick = sendAnswer;
+    document.getElementById('answer-text').addEventListener('input', updateSendButton);
+    document.getElementById('end-shift').onclick = endShift;
+
+    // Получаем ник и показываем
+    (async () => {
+      nickname = await loadUserNickname();
+      document.getElementById('nickname').textContent = nickname;
+    })();
   </script>
 </body>
 </html>
