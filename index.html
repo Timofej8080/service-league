@@ -232,7 +232,7 @@
     // Supabase init - вставь свои данные
     const SUPABASE_URL = 'https://duwhvbffcrtqpohihdoo.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1d2h2YmZmY3J0cXBvaGloZG9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NjQ3NzMsImV4cCI6MjA2ODQ0MDc3M30.8Rwgy3hH8D45QmHPdxxP-GhEo6smgxtlWrMwIQHzsuo';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Никнейм по user_id ВК
     function createNicknameFromUserId(userId) {
