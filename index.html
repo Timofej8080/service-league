@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<<<<<<< HEAD
   <meta charset="UTF-8">
   <title>Сервисная Лига</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -49,10 +50,69 @@
 
     button:hover {
       background: #2563eb;
+=======
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Сервисная Лига</title>
+  <style>
+    body {
+      margin: 0; font-family: Arial, sans-serif; background: #f5f7fa; color: #333;
+      display: flex; height: 100vh;
+    }
+    #app {
+      display: flex; width: 100%; max-width: 900px; margin: auto; border: 1px solid #ddd;
+      background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .left-panel {
+      width: 30%; border-right: 1px solid #ddd; padding: 20px; box-sizing: border-box;
+      background: #e8f0fe;
+    }
+    .right-panel {
+      width: 70%; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
+      justify-content: space-between;
+    }
+    .client-name {
+      font-size: 24px; font-weight: bold; margin-bottom: 10px;
+    }
+    .client-status {
+      font-size: 14px; color: #666; margin-bottom: 20px;
+    }
+    .chat {
+      flex-grow: 1; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 6px;
+      background: #fff; margin-bottom: 20px;
+      max-height: 300px;
+    }
+    .message {
+      margin-bottom: 15px;
+    }
+    .message.client {
+      text-align: left; color: #1a73e8; font-weight: 600;
+    }
+    .message.agent {
+      text-align: right; color: #333;
+    }
+    #answer-input {
+      width: 100%; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    button#send-btn {
+      padding: 10px; font-size: 16px; border: none; border-radius: 6px;
+      cursor: pointer; background: #1a73e8; color: white;
+      transition: background 0.3s;
+      width: 100%;
+    }
+    button#send-btn:hover {
+      background: #155ab6;
+    }
+    .result {
+      font-size: 20px; text-align: center; margin-top: 20px;
+>>>>>>> 2f88b8f8e2ae633c51d197e4d2355db653f901fd
     }
   </style>
 </head>
 <body>
+<<<<<<< HEAD
 
   <div class="card">
     <h1>Сервисная Лига</h1>
@@ -60,9 +120,24 @@
     <p>Добро пожаловать в тренировочную поддержку!</p>
     <p>Ваша задача — корректно и профессионально отвечать на обращения клиентов.</p>
     <button onclick="startShift()">Начать смену</button>
+=======
+  <div id="app">
+    <div class="left-panel" id="client-card">
+      <div class="client-name" id="client-name"></div>
+      <div class="client-status" id="client-status"></div>
+      <div>Уровень: <span id="user-level">Стажёр</span></div>
+      <div>Очки: <span id="user-score">0</span></div>
+    </div>
+    <div class="right-panel">
+      <div class="chat" id="chat"></div>
+      <input type="text" id="answer-input" placeholder="Введите ответ..." autocomplete="off" />
+      <button id="send-btn">Отправить</button>
+    </div>
+>>>>>>> 2f88b8f8e2ae633c51d197e4d2355db653f901fd
   </div>
 
   <script>
+<<<<<<< HEAD
     const names = ['Unicors', 'Starlight', 'Nebula', 'Galaxy', 'Nova', 'Quantum', 'Orbit', 'Comet', 'Echo', 'Nimbus'];
 
     function generateNickname() {
@@ -86,6 +161,142 @@
       // Здесь будет переход к следующему экрану (обращения и ответы)
       alert('Смена началась! (пока заглушка)');
     }
+=======
+    const bridge = window.vkBridge;
+    let user = null;
+    let score = 0;
+    let currentQuestionIndex = 0;
+
+    // Пример клиентов
+    const clients = [
+      { name: "Ирина", mood: "спокойна" },
+      { name: "Алексей", mood: "недоволен" },
+      { name: "Светлана", mood: "взволнована" },
+    ];
+
+    // Вопросы, ключевые слова для оценки и пример правильного ответа
+    const questions = [
+      {
+        clientMessage: "Здравствуйте! Я не могу войти в свой аккаунт. Что делать?",
+        keywords: ["сброс", "пароль", "восстановить", "помочь", "извините", "проверю"],
+        exampleAnswer: "Пожалуйста, попробуйте сбросить пароль через форму восстановления."
+      },
+      {
+        clientMessage: "Мой заказ задерживается, когда он будет доставлен?",
+        keywords: ["уточню", "статус", "проверю", "извините", "доставлен", "скоро"],
+        exampleAnswer: "Сейчас уточню статус и сообщу вам."
+      },
+      {
+        clientMessage: "Ваш сайт не работает, я не могу сделать покупку!",
+        keywords: ["извините", "работаем", "исправляем", "помощь", "проблема", "скоро"],
+        exampleAnswer: "Приносим извинения, команда уже работает над исправлением."
+      },
+    ];
+
+    function init() {
+      bridge.send("VKWebAppInit");
+
+      bridge.send("VKWebAppGetUserInfo")
+        .then(data => {
+          user = data;
+          startGame();
+        })
+        .catch(() => {
+          alert("Не удалось получить данные пользователя ВКонтакте.");
+        });
+    }
+
+    function startGame() {
+      score = 0;
+      currentQuestionIndex = 0;
+      document.getElementById("user-score").textContent = score;
+      updateUserLevel();
+      updateClientCard();
+      loadQuestion();
+    }
+
+    function updateUserLevel() {
+      let level = "Стажёр";
+      if (score >= 7) level = "Эксперт";
+      else if (score >= 4) level = "Менеджер";
+      document.getElementById("user-level").textContent = level;
+    }
+
+    function updateClientCard() {
+      const client = clients[currentQuestionIndex % clients.length];
+      document.getElementById("client-name").textContent = client.name;
+      document.getElementById("client-status").textContent = `Настроение: ${client.mood}`;
+    }
+
+    function loadQuestion() {
+      const chat = document.getElementById("chat");
+      chat.innerHTML = "";
+      const question = questions[currentQuestionIndex];
+      appendMessage("client", question.clientMessage);
+      clearAnswerInput();
+      document.getElementById("answer-input").focus();
+    }
+
+    function appendMessage(sender, text) {
+      const chat = document.getElementById("chat");
+      const msg = document.createElement("div");
+      msg.className = `message ${sender}`;
+      msg.textContent = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function clearAnswerInput() {
+      document.getElementById("answer-input").value = "";
+    }
+
+    function checkAnswer(answer) {
+      const question = questions[currentQuestionIndex];
+      let lowerAnswer = answer.toLowerCase();
+      let matched = question.keywords.some(keyword => lowerAnswer.includes(keyword));
+
+      let points = matched ? 3 : 0;
+      score += points;
+      document.getElementById("user-score").textContent = score;
+      updateUserLevel();
+
+      appendMessage("agent", answer);
+      appendMessage("agent", `Пример ответа: "${question.exampleAnswer}"`);
+
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex < questions.length) {
+        updateClientCard();
+        setTimeout(loadQuestion, 2500);
+      } else {
+        setTimeout(showResult, 2500);
+      }
+    }
+
+    function showResult() {
+      const chat = document.getElementById("chat");
+      chat.innerHTML = `<div class="result">Игра окончена! Ваш результат: ${score} очков.</div>`;
+      document.getElementById("answers").style.display = "none";
+      document.getElementById("answer-input").style.display = "none";
+      document.getElementById("send-btn").style.display = "none";
+    }
+
+    document.getElementById("send-btn").addEventListener("click", () => {
+      const input = document.getElementById("answer-input");
+      const answer = input.value.trim();
+      if (answer.length === 0) return alert("Пожалуйста, введите ответ.");
+      checkAnswer(answer);
+    });
+
+    document.getElementById("answer-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("send-btn").click();
+      }
+    });
+
+    init();
+>>>>>>> 2f88b8f8e2ae633c51d197e4d2355db653f901fd
   </script>
 
 </body>
