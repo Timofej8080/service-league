@@ -5,116 +5,248 @@
   <title>Сервисная Лига — VK Bridge</title>
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+    /* Общие настройки */
     body {
       font-family: 'Inter', sans-serif;
-      background: #0f172a;
-      color: #f1f5f9;
+      background: linear-gradient(135deg, #1a202c, #0f172a);
+      color: #e0e7ff;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
+
     .card {
       background: #1e293b;
-      padding: 40px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      padding: 36px 40px 40px 40px;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(50, 50, 93, 0.25), 0 4px 16px rgba(0, 0, 0, 0.3);
       text-align: center;
-      width: 400px;
+      width: 420px;
       max-height: 90vh;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
+
+    /* Заголовки */
     h1, h2, h3 {
-      margin: 0 0 15px 0;
-    }
-    .username {
-      margin-bottom: 30px;
-      color: #94a3b8;
+      margin: 0 0 20px 0;
       font-weight: 600;
+      color: #cbd5e1;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+    h2 {
+      font-size: 22px;
+    }
+    h3 {
       font-size: 18px;
     }
+
+    /* Никнейм */
+    .username {
+      margin-bottom: 35px;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 0.05em;
+      user-select: none;
+    }
+
+    /* Параграфы */
+    p {
+      margin: 0 0 18px 0;
+      line-height: 1.5;
+      color: #a0aec0;
+      font-size: 15px;
+    }
+
+    /* Кнопки */
     button {
       background: #3b82f6;
       border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 16px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      color: #f1f5f9;
+      font-size: 17px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s;
-      margin-bottom: 10px;
+      transition: background-color 0.3s ease, box-shadow 0.25s ease;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
+      user-select: none;
+      margin-bottom: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     button:hover {
       background: #2563eb;
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.8);
     }
+    button:active {
+      background: #1e40af;
+      box-shadow: 0 3px 8px rgba(30, 64, 175, 0.9);
+      transform: translateY(1px);
+    }
+
+    /* Список тикетов */
+    #tickets-list {
+      overflow-y: auto;
+      max-height: 230px;
+      margin-bottom: 28px;
+      border-radius: 12px;
+      background: #334155;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+      padding: 12px 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #60a5fa #1e293b;
+    }
+    #tickets-list::-webkit-scrollbar {
+      width: 10px;
+    }
+    #tickets-list::-webkit-scrollbar-track {
+      background: #1e293b;
+      border-radius: 12px;
+    }
+    #tickets-list::-webkit-scrollbar-thumb {
+      background-color: #60a5fa;
+      border-radius: 12px;
+      border: 2px solid #1e293b;
+    }
+
     #tickets-list button {
       background: #2563eb;
       width: 100%;
       text-align: left;
-      padding: 10px;
-      margin-bottom: 8px;
-      font-size: 14px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      border-radius: 10px;
+      font-weight: 600;
+      color: #e0e7ff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.6);
+      transition: background-color 0.25s ease;
+    }
+    #tickets-list button:hover:not(.answered) {
+      background: #3b82f6;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.8);
     }
     #tickets-list button.answered {
-      background: #4ade80;
+      background: #22c55e;
       color: #0f172a;
       text-decoration: line-through;
+      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.7);
+      cursor: default;
     }
+
+    /* Детали тикета */
+    #ticket-details {
+      text-align: left;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #client-message {
+      background:#475569;
+      padding: 16px;
+      border-radius: 14px;
+      min-height: 70px;
+      margin-bottom: 18px;
+      color: #e2e8f0;
+      font-size: 15px;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+    }
+
     textarea {
       resize: none;
       font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      padding: 8px;
-      border-radius: 8px;
+      font-size: 15px;
+      padding: 14px;
+      border-radius: 14px;
       border: none;
-      margin-bottom: 10px;
+      margin-bottom: 18px;
       width: 100%;
       box-sizing: border-box;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+      transition: box-shadow 0.3s ease;
+      color: #f1f5f9;
+      background: #1e293b;
     }
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 20px #3b82f6;
+      background: #293544;
+    }
+
     #send-answer {
       background: #10b981;
+      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.7);
     }
     #send-answer:hover {
       background: #059669;
+      box-shadow: 0 7px 18px rgba(5, 150, 105, 0.8);
     }
+    #send-answer:active {
+      background: #047857;
+      box-shadow: 0 3px 10px rgba(4, 120, 87, 0.9);
+      transform: translateY(1px);
+    }
+
     #end-shift {
       background: #ef4444;
       margin-top: auto;
+      font-weight: 700;
+      box-shadow: 0 5px 18px rgba(239, 68, 68, 0.7);
     }
     #end-shift:hover {
       background: #b91c1c;
+      box-shadow: 0 7px 20px rgba(185, 28, 28, 0.85);
+    }
+    #end-shift:active {
+      background: #7f1d1d;
+      box-shadow: 0 3px 12px rgba(127, 29, 29, 1);
+      transform: translateY(1px);
     }
   </style>
 </head>
 <body>
 
   <!-- Экран приветствия -->
-  <div id="welcome-screen" class="card">
+  <div id="welcome-screen" class="card" role="main" aria-label="Экран приветствия">
     <h1>Сервисная Лига</h1>
-    <div class="username" id="nickname">Загрузка...</div>
+    <div class="username" id="nickname" aria-live="polite">Загрузка...</div>
     <p>Добро пожаловать в тренировочную поддержку!</p>
     <p>Ваша задача — корректно и профессионально отвечать на обращения клиентов.</p>
-    <button id="start-shift-btn">Начать смену</button>
+    <button id="start-shift-btn" aria-label="Начать смену">🚀 Начать смену</button>
   </div>
 
   <!-- Рабочий экран -->
-  <div id="work-screen" class="card" style="display:none;">
+  <div id="work-screen" class="card" style="display:none;" role="main" aria-label="Рабочий интерфейс">
     <h2>Рабочий интерфейс</h2>
-    <div id="tickets-list" style="margin-bottom: 20px;"></div>
+    <div id="tickets-list" aria-label="Список обращений клиентов" tabindex="0"></div>
 
     <div id="ticket-details" style="text-align:left;">
       <h3>Детали обращения</h3>
       <p><strong>Сообщение клиента:</strong></p>
-      <p id="client-message" style="background:#334155; padding: 12px; border-radius: 8px; min-height: 60px;"></p>
+      <p id="client-message" style="background:#334155; padding: 12px; border-radius: 8px; min-height: 60px;" aria-live="polite"></p>
       <p><strong>Ваш ответ:</strong></p>
-      <textarea id="answer-text" rows="4" placeholder="Напишите ответ..."></textarea>
-      <button id="send-answer">Отправить ответ</button>
+      <textarea id="answer-text" rows="4" placeholder="Напишите ответ..." aria-label="Поле для ввода ответа"></textarea>
+      <button id="send-answer" aria-label="Отправить ответ">📤 Отправить ответ</button>
     </div>
 
-    <button id="end-shift">Завершить смену</button>
+    <button id="end-shift" aria-label="Завершить смену">⏰ Завершить смену</button>
   </div>
 
   <script>
@@ -139,144 +271,117 @@
     // Получаем данные из VK Storage
     async function getUserData() {
       try {
-        const response = await vkBridge.send('VKWebAppStorageGet', { keys: ['userData'] });
-        if (response.keys && response.keys.length > 0) {
-          const stored = response.keys[0].value;
-          return stored ? JSON.parse(stored) : null;
+        const response = await vkBridge.send('VKWebAppStorageGet', { keys: ['nickname'] });
+        if (response.keys.length > 0 && response.keys[0].value) {
+          return response.keys[0].value;
         }
       } catch(e) {
-        console.error('Ошибка получения данных из Storage', e);
+        console.error('Ошибка при получении ника:', e);
       }
       return null;
     }
 
-    // Сохраняем данные в VK Storage
-    async function setUserData(userData) {
+    // Сохраняем ник
+    async function saveNickname(nick) {
       try {
-        await vkBridge.send('VKWebAppStorageSet', { key: 'userData', value: JSON.stringify(userData) });
+        await vkBridge.send('VKWebAppStorageSet', { key: 'nickname', value: nick });
       } catch(e) {
-        console.error('Ошибка сохранения данных в Storage', e);
+        console.error('Ошибка при сохранении ника:', e);
       }
     }
 
-    // Инициализация и отображение ника
-    async function initUser() {
-      let userData = await getUserData();
-      if (!userData) {
-        userData = {
-          nickname: `${generateName()}#${generateNumber()}`
-        };
-        await setUserData(userData);
+    // Показываем никнейм
+    async function loadNickname() {
+      let nick = await getUserData();
+      if (!nick) {
+        nick = generateName() + generateNumber();
+        await saveNickname(nick);
       }
-      document.getElementById('nickname').textContent = userData.nickname;
-      return userData.nickname;
+      document.getElementById('nickname').textContent = nick;
     }
 
-    // ==== Данные тикетов (заглушка) ====
-    // Можно заменить на загрузку с сервера или из VK Storage
-    let tickets = [
-      { id: 1, client: "Иван Иванов", message: "Не могу войти в аккаунт", status: "new", answer: "" },
-      { id: 2, client: "Мария Петрова", message: "Как вернуть деньги?", status: "new", answer: "" },
-      { id: 3, client: "Алексей Смирнов", message: "Почему долго грузится приложение?", status: "new", answer: "" },
+    // Моковые обращения
+    const tickets = [
+      { id: 1, message: "Не могу войти в аккаунт, помогите пожалуйста.", answered: false, answer: "" },
+      { id: 2, message: "Почему мой заказ задерживается?", answered: false, answer: "" },
+      { id: 3, message: "Как изменить адрес доставки?", answered: true, answer: "Здравствуйте, изменить адрес доставки можно в личном кабинете." },
+      { id: 4, message: "Приложение вылетает при запуске.", answered: false, answer: "" },
+      { id: 5, message: "Где найти настройки уведомлений?", answered: true, answer: "В настройках профиля выберите раздел 'Уведомления'." }
     ];
 
-    // Текущий выбранный тикет
     let currentTicketId = null;
 
-    // Переключение экранов
-    const welcomeScreen = document.getElementById('welcome-screen');
-    const workScreen = document.getElementById('work-screen');
-
-    function renderTicketsList() {
+    // Обновление списка тикетов
+    function renderTickets() {
       const container = document.getElementById('tickets-list');
       container.innerHTML = '';
-
       tickets.forEach(ticket => {
         const btn = document.createElement('button');
-        btn.textContent = `${ticket.client} (${ticket.status === 'new' ? 'Новое' : 'Обработано'})`;
-        btn.className = ticket.status === 'answered' ? 'answered' : '';
-        btn.onclick = () => showTicketDetails(ticket.id);
+        btn.textContent = (ticket.answered ? "✔️ " : "❗ ") + ticket.message;
+        btn.className = ticket.answered ? 'answered' : '';
+        btn.disabled = ticket.answered;
+        btn.onclick = () => {
+          if (!ticket.answered) {
+            currentTicketId = ticket.id;
+            showTicketDetails(ticket);
+          }
+        };
         container.appendChild(btn);
       });
     }
 
-    function showTicketDetails(id) {
-      currentTicketId = id;
-      const ticket = tickets.find(t => t.id === id);
-      if (!ticket) return;
-
+    // Отображение деталей обращения
+    function showTicketDetails(ticket) {
       document.getElementById('client-message').textContent = ticket.message;
-      document.getElementById('answer-text').value = ticket.answer;
+      document.getElementById('answer-text').value = ticket.answer || '';
+      document.getElementById('answer-text').focus();
     }
 
-    function clearTicketDetails() {
+    // Отправка ответа
+    function sendAnswer() {
+      const answerInput = document.getElementById('answer-text');
+      if (!currentTicketId) {
+        alert('Выберите обращение для ответа.');
+        return;
+      }
+      const answerText = answerInput.value.trim();
+      if (!answerText) {
+        alert('Ответ не может быть пустым.');
+        return;
+      }
+      const ticket = tickets.find(t => t.id === currentTicketId);
+      ticket.answer = answerText;
+      ticket.answered = true;
       currentTicketId = null;
+      answerInput.value = '';
+      renderTickets();
+      clearTicketDetails();
+    }
+
+    // Очистка деталей обращения
+    function clearTicketDetails() {
       document.getElementById('client-message').textContent = '';
       document.getElementById('answer-text').value = '';
     }
 
-    async function saveTicketsToStorage() {
-      try {
-        await vkBridge.send('VKWebAppStorageSet', { key: 'ticketsData', value: JSON.stringify(tickets) });
-      } catch(e) {
-        console.error('Ошибка сохранения тикетов', e);
-      }
-    }
-
-    async function loadTicketsFromStorage() {
-      try {
-        const response = await vkBridge.send('VKWebAppStorageGet', { keys: ['ticketsData'] });
-        if (response.keys && response.keys.length > 0) {
-          const stored = response.keys[0].value;
-          if (stored) {
-            tickets = JSON.parse(stored);
-          }
-        }
-      } catch(e) {
-        console.error('Ошибка загрузки тикетов', e);
-      }
-    }
-
-    // Кнопка начать смену
-    document.getElementById('start-shift-btn').onclick = async () => {
-      await loadTicketsFromStorage();
-      welcomeScreen.style.display = 'none';
-      workScreen.style.display = 'flex';
-      renderTicketsList();
-      clearTicketDetails();
+    // Начать смену
+    document.getElementById('start-shift-btn').onclick = () => {
+      document.getElementById('welcome-screen').style.display = 'none';
+      document.getElementById('work-screen').style.display = 'flex';
+      renderTickets();
     };
 
-    // Кнопка отправить ответ
-    document.getElementById('send-answer').onclick = async () => {
-      if (currentTicketId === null) {
-        alert('Выберите обращение');
-        return;
+    // Отправка ответа на кнопку
+    document.getElementById('send-answer').onclick = sendAnswer;
+
+    // Завершить смену — просто обновим страницу (можно улучшить)
+    document.getElementById('end-shift').onclick = () => {
+      if (confirm('Завершить смену? Все несохранённые ответы будут потеряны.')) {
+        location.reload();
       }
-      const answer = document.getElementById('answer-text').value.trim();
-      if (!answer) {
-        alert('Ответ не может быть пустым');
-        return;
-      }
-      const ticket = tickets.find(t => t.id === currentTicketId);
-      ticket.answer = answer;
-      ticket.status = 'answered';
-      alert('Ответ отправлен');
-      renderTicketsList();
-      clearTicketDetails();
-      await saveTicketsToStorage();
     };
 
-    // Кнопка завершить смену
-    document.getElementById('end-shift').onclick = async () => {
-      alert('Смена завершена!');
-      await saveTicketsToStorage();
-      workScreen.style.display = 'none';
-      welcomeScreen.style.display = 'block';
-    };
-
-    // Инициализация пользователя при загрузке
-    initUser();
+    loadNickname();
   </script>
-
 </body>
 </html>
