@@ -7,7 +7,6 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
-    /* Общие настройки */
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #1a202c, #0f172a);
@@ -34,7 +33,6 @@
       overflow: hidden;
     }
 
-    /* Заголовки */
     h1, h2, h3 {
       margin: 0 0 20px 0;
       font-weight: 600;
@@ -52,7 +50,6 @@
       font-size: 18px;
     }
 
-    /* Никнейм */
     .username {
       margin-bottom: 35px;
       color: #94a3b8;
@@ -60,9 +57,9 @@
       font-size: 20px;
       letter-spacing: 0.05em;
       user-select: none;
+      word-break: break-word;
     }
 
-    /* Параграфы */
     p {
       margin: 0 0 18px 0;
       line-height: 1.5;
@@ -70,7 +67,6 @@
       font-size: 15px;
     }
 
-    /* Кнопки */
     button {
       background: #3b82f6;
       border: none;
@@ -99,7 +95,6 @@
       transform: translateY(1px);
     }
 
-    /* Список тикетов */
     #tickets-list {
       overflow-y: auto;
       max-height: 230px;
@@ -149,7 +144,6 @@
       cursor: default;
     }
 
-    /* Детали тикета */
     #ticket-details {
       text-align: left;
       flex-grow: 1;
@@ -250,57 +244,36 @@
   </div>
 
   <script>
-    const vkBridge = window.vkBridge;
-
     // Инициализация VK Bridge
     vkBridge.send('VKWebAppInit');
 
-    // Генерация ника (слоги + число)
-    function generateName() {
-      const syllables = ["uni", "gor", "mor", "lex", "nor", "zir", "vel", "rex", "tron", "ex", "ka", "tor", "nim", "lan"];
-      let name = "";
+    // Создаем стабильный никнейм на основе user_id
+    function createNicknameFromUserId(userId) {
+      // Пример: взять userId, перевести в строку и добавить суффикс из букв
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let suffix = '';
+      let num = Number(userId);
       for (let i = 0; i < 3; i++) {
-        name += syllables[Math.floor(Math.random() * syllables.length)];
+        suffix += letters[num % letters.length];
+        num = Math.floor(num / letters.length);
       }
-      return name.charAt(0).toUpperCase() + name.slice(1);
-    }
-    function generateNumber() {
-      return Math.floor(Math.random() * 600) + 1;
+      return `User${userId}-${suffix}`;
     }
 
-    // Получаем данные из VK Storage
-    async function getUserData() {
+    async function loadUserNickname() {
       try {
-        const response = await vkBridge.send('VKWebAppStorageGet', { keys: ['nickname'] });
-        if (response.keys.length > 0 && response.keys[0].value) {
-          return response.keys[0].value;
+        const userInfo = await vkBridge.send('VKWebAppGetUserInfo');
+        if (userInfo && userInfo.id) {
+          return createNicknameFromUserId(userInfo.id);
         }
-      } catch(e) {
-        console.error('Ошибка при получении ника:', e);
+      } catch (e) {
+        console.error('Ошибка при получении информации о пользователе:', e);
       }
-      return null;
+      // Если получить userId не удалось — сгенерировать временный ник
+      return 'Guest' + Math.floor(Math.random() * 10000);
     }
 
-    // Сохраняем ник
-    async function saveNickname(nick) {
-      try {
-        await vkBridge.send('VKWebAppStorageSet', { key: 'nickname', value: nick });
-      } catch(e) {
-        console.error('Ошибка при сохранении ника:', e);
-      }
-    }
-
-    // Показываем никнейм
-    async function loadNickname() {
-      let nick = await getUserData();
-      if (!nick) {
-        nick = generateName() + generateNumber();
-        await saveNickname(nick);
-      }
-      document.getElementById('nickname').textContent = nick;
-    }
-
-    // Моковые обращения
+    // Работа с тикетами
     const tickets = [
       { id: 1, message: "Не могу войти в аккаунт, помогите пожалуйста.", answered: false, answer: "" },
       { id: 2, message: "Почему мой заказ задерживается?", answered: false, answer: "" },
@@ -311,7 +284,6 @@
 
     let currentTicketId = null;
 
-    // Обновление списка тикетов
     function renderTickets() {
       const container = document.getElementById('tickets-list');
       container.innerHTML = '';
@@ -330,14 +302,12 @@
       });
     }
 
-    // Отображение деталей обращения
     function showTicketDetails(ticket) {
       document.getElementById('client-message').textContent = ticket.message;
       document.getElementById('answer-text').value = ticket.answer || '';
       document.getElementById('answer-text').focus();
     }
 
-    // Отправка ответа
     function sendAnswer() {
       const answerInput = document.getElementById('answer-text');
       if (!currentTicketId) {
@@ -358,30 +328,32 @@
       clearTicketDetails();
     }
 
-    // Очистка деталей обращения
     function clearTicketDetails() {
       document.getElementById('client-message').textContent = '';
       document.getElementById('answer-text').value = '';
     }
 
-    // Начать смену
+    // Кнопка начать смену
     document.getElementById('start-shift-btn').onclick = () => {
       document.getElementById('welcome-screen').style.display = 'none';
       document.getElementById('work-screen').style.display = 'flex';
       renderTickets();
     };
 
-    // Отправка ответа на кнопку
+    // Кнопка отправить ответ
     document.getElementById('send-answer').onclick = sendAnswer;
 
-    // Завершить смену — просто обновим страницу (можно улучшить)
+    // Кнопка завершить смену
     document.getElementById('end-shift').onclick = () => {
       if (confirm('Завершить смену? Все несохранённые ответы будут потеряны.')) {
         location.reload();
       }
     };
 
-    loadNickname();
+    // Загружаем и отображаем никнейм
+    loadUserNickname().then(nick => {
+      document.getElementById('nickname').textContent = nick;
+    });
   </script>
 </body>
 </html>
