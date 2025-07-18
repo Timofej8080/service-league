@@ -22,9 +22,20 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       text-align: center;
       width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
-    h1 { margin-bottom: 10px; font-size: 24px; }
-    .username { margin-bottom: 30px; color: #94a3b8; font-weight: 600; font-size: 18px; }
+    h1, h2, h3 {
+      margin: 0 0 15px 0;
+    }
+    .username {
+      margin-bottom: 30px;
+      color: #94a3b8;
+      font-weight: 600;
+      font-size: 18px;
+    }
     button {
       background: #3b82f6;
       border: none;
@@ -34,18 +45,76 @@
       font-size: 16px;
       cursor: pointer;
       transition: background 0.3s;
+      margin-bottom: 10px;
     }
-    button:hover { background: #2563eb; }
+    button:hover {
+      background: #2563eb;
+    }
+    #tickets-list button {
+      background: #2563eb;
+      width: 100%;
+      text-align: left;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    #tickets-list button.answered {
+      background: #4ade80;
+      color: #0f172a;
+      text-decoration: line-through;
+    }
+    textarea {
+      resize: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #send-answer {
+      background: #10b981;
+    }
+    #send-answer:hover {
+      background: #059669;
+    }
+    #end-shift {
+      background: #ef4444;
+      margin-top: auto;
+    }
+    #end-shift:hover {
+      background: #b91c1c;
+    }
   </style>
 </head>
 <body>
 
-  <div class="card">
+  <!-- Экран приветствия -->
+  <div id="welcome-screen" class="card">
     <h1>Сервисная Лига</h1>
     <div class="username" id="nickname">Загрузка...</div>
     <p>Добро пожаловать в тренировочную поддержку!</p>
     <p>Ваша задача — корректно и профессионально отвечать на обращения клиентов.</p>
-    <button onclick="startShift()">Начать смену</button>
+    <button id="start-shift-btn">Начать смену</button>
+  </div>
+
+  <!-- Рабочий экран -->
+  <div id="work-screen" class="card" style="display:none;">
+    <h2>Рабочий интерфейс</h2>
+    <div id="tickets-list" style="margin-bottom: 20px;"></div>
+
+    <div id="ticket-details" style="text-align:left;">
+      <h3>Детали обращения</h3>
+      <p><strong>Сообщение клиента:</strong></p>
+      <p id="client-message" style="background:#334155; padding: 12px; border-radius: 8px; min-height: 60px;"></p>
+      <p><strong>Ваш ответ:</strong></p>
+      <textarea id="answer-text" rows="4" placeholder="Напишите ответ..."></textarea>
+      <button id="send-answer">Отправить ответ</button>
+    </div>
+
+    <button id="end-shift">Завершить смену</button>
   </div>
 
   <script>
@@ -90,6 +159,7 @@
       }
     }
 
+    // Инициализация и отображение ника
     async function initUser() {
       let userData = await getUserData();
       if (!userData) {
@@ -98,17 +168,114 @@
         };
         await setUserData(userData);
       }
+      document.getElementById('nickname').textContent = userData.nickname;
       return userData.nickname;
     }
 
-    // Инициализация и отображение ника
-    initUser().then(nickname => {
-      document.getElementById('nickname').textContent = nickname;
-    });
+    // ==== Данные тикетов (заглушка) ====
+    // Можно заменить на загрузку с сервера или из VK Storage
+    let tickets = [
+      { id: 1, client: "Иван Иванов", message: "Не могу войти в аккаунт", status: "new", answer: "" },
+      { id: 2, client: "Мария Петрова", message: "Как вернуть деньги?", status: "new", answer: "" },
+      { id: 3, client: "Алексей Смирнов", message: "Почему долго грузится приложение?", status: "new", answer: "" },
+    ];
 
-    function startShift() {
-      alert('Смена началась! (пока заглушка)');
+    // Текущий выбранный тикет
+    let currentTicketId = null;
+
+    // Переключение экранов
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const workScreen = document.getElementById('work-screen');
+
+    function renderTicketsList() {
+      const container = document.getElementById('tickets-list');
+      container.innerHTML = '';
+
+      tickets.forEach(ticket => {
+        const btn = document.createElement('button');
+        btn.textContent = `${ticket.client} (${ticket.status === 'new' ? 'Новое' : 'Обработано'})`;
+        btn.className = ticket.status === 'answered' ? 'answered' : '';
+        btn.onclick = () => showTicketDetails(ticket.id);
+        container.appendChild(btn);
+      });
     }
+
+    function showTicketDetails(id) {
+      currentTicketId = id;
+      const ticket = tickets.find(t => t.id === id);
+      if (!ticket) return;
+
+      document.getElementById('client-message').textContent = ticket.message;
+      document.getElementById('answer-text').value = ticket.answer;
+    }
+
+    function clearTicketDetails() {
+      currentTicketId = null;
+      document.getElementById('client-message').textContent = '';
+      document.getElementById('answer-text').value = '';
+    }
+
+    async function saveTicketsToStorage() {
+      try {
+        await vkBridge.send('VKWebAppStorageSet', { key: 'ticketsData', value: JSON.stringify(tickets) });
+      } catch(e) {
+        console.error('Ошибка сохранения тикетов', e);
+      }
+    }
+
+    async function loadTicketsFromStorage() {
+      try {
+        const response = await vkBridge.send('VKWebAppStorageGet', { keys: ['ticketsData'] });
+        if (response.keys && response.keys.length > 0) {
+          const stored = response.keys[0].value;
+          if (stored) {
+            tickets = JSON.parse(stored);
+          }
+        }
+      } catch(e) {
+        console.error('Ошибка загрузки тикетов', e);
+      }
+    }
+
+    // Кнопка начать смену
+    document.getElementById('start-shift-btn').onclick = async () => {
+      await loadTicketsFromStorage();
+      welcomeScreen.style.display = 'none';
+      workScreen.style.display = 'flex';
+      renderTicketsList();
+      clearTicketDetails();
+    };
+
+    // Кнопка отправить ответ
+    document.getElementById('send-answer').onclick = async () => {
+      if (currentTicketId === null) {
+        alert('Выберите обращение');
+        return;
+      }
+      const answer = document.getElementById('answer-text').value.trim();
+      if (!answer) {
+        alert('Ответ не может быть пустым');
+        return;
+      }
+      const ticket = tickets.find(t => t.id === currentTicketId);
+      ticket.answer = answer;
+      ticket.status = 'answered';
+      alert('Ответ отправлен');
+      renderTicketsList();
+      clearTicketDetails();
+      await saveTicketsToStorage();
+    };
+
+    // Кнопка завершить смену
+    document.getElementById('end-shift').onclick = async () => {
+      alert('Смена завершена!');
+      await saveTicketsToStorage();
+      workScreen.style.display = 'none';
+      welcomeScreen.style.display = 'block';
+    };
+
+    // Инициализация пользователя при загрузке
+    initUser();
   </script>
 
 </body>
