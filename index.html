@@ -2,12 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Сервисная Лига</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <title>Сервисная Лига — VK Bridge</title>
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <style>
     body {
-      margin: 0;
-      padding: 0;
       font-family: 'Inter', sans-serif;
       background: #0f172a;
       color: #f1f5f9;
@@ -15,6 +13,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .card {
       background: #1e293b;
@@ -24,16 +23,8 @@
       text-align: center;
       width: 400px;
     }
-    h1 {
-      margin-bottom: 10px;
-      font-size: 24px;
-    }
-    .username {
-      margin-bottom: 30px;
-      color: #94a3b8;
-      font-weight: 600;
-      font-size: 18px;
-    }
+    h1 { margin-bottom: 10px; font-size: 24px; }
+    .username { margin-bottom: 30px; color: #94a3b8; font-weight: 600; font-size: 18px; }
     button {
       background: #3b82f6;
       border: none;
@@ -44,9 +35,7 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    button:hover {
-      background: #2563eb;
-    }
+    button:hover { background: #2563eb; }
   </style>
 </head>
 <body>
@@ -60,22 +49,12 @@
   </div>
 
   <script>
-    // Проверяем, что VK API доступен
-    if (!window.VK) {
-      document.getElementById('nickname').textContent = 'Ошибка: VK API не загружен';
-    }
+    const vkBridge = window.vkBridge;
 
-    // Инициализация VK API (если нужно, в мини-приложении обычно уже инициализирован)
-    VK.init(() => {
-      initUser().then(nickname => {
-        document.getElementById('nickname').textContent = nickname;
-      });
-    }, error => {
-      document.getElementById('nickname').textContent = 'Ошибка инициализации VK API';
-      console.error('VK init failed', error);
-    });
+    // Инициализация VK Bridge
+    vkBridge.send('VKWebAppInit');
 
-    // Генерация рандомного ника из слогов (без готового списка, с рандомом)
+    // Генерация ника (слоги + число)
     function generateName() {
       const syllables = ["uni", "gor", "mor", "lex", "nor", "zir", "vel", "rex", "tron", "ex", "ka", "tor", "nim", "lan"];
       let name = "";
@@ -84,38 +63,33 @@
       }
       return name.charAt(0).toUpperCase() + name.slice(1);
     }
-
     function generateNumber() {
       return Math.floor(Math.random() * 600) + 1;
     }
 
-    // Получение данных пользователя из VK Storage
-    function getUserData() {
-      return new Promise(resolve => {
-        VK.Storage.get('userData', (data) => {
-          if (data && data.value) {
-            try {
-              resolve(JSON.parse(data.value));
-            } catch {
-              resolve(null);
-            }
-          } else {
-            resolve(null);
-          }
-        });
-      });
+    // Получаем данные из VK Storage
+    async function getUserData() {
+      try {
+        const response = await vkBridge.send('VKWebAppStorageGet', { keys: ['userData'] });
+        if (response.keys && response.keys.length > 0) {
+          const stored = response.keys[0].value;
+          return stored ? JSON.parse(stored) : null;
+        }
+      } catch(e) {
+        console.error('Ошибка получения данных из Storage', e);
+      }
+      return null;
     }
 
-    // Сохранение данных пользователя в VK Storage
-    function setUserData(userData) {
-      return new Promise(resolve => {
-        VK.Storage.set({key: 'userData', value: JSON.stringify(userData)}, () => {
-          resolve();
-        });
-      });
+    // Сохраняем данные в VK Storage
+    async function setUserData(userData) {
+      try {
+        await vkBridge.send('VKWebAppStorageSet', { key: 'userData', value: JSON.stringify(userData) });
+      } catch(e) {
+        console.error('Ошибка сохранения данных в Storage', e);
+      }
     }
 
-    // Инициализация пользователя: получение или создание ника
     async function initUser() {
       let userData = await getUserData();
       if (!userData) {
@@ -126,6 +100,11 @@
       }
       return userData.nickname;
     }
+
+    // Инициализация и отображение ника
+    initUser().then(nickname => {
+      document.getElementById('nickname').textContent = nickname;
+    });
 
     function startShift() {
       alert('Смена началась! (пока заглушка)');
